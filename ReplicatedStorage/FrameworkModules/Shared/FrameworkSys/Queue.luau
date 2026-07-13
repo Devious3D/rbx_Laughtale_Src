@@ -6,7 +6,8 @@ local Queues: {Framework.tQueue} = {}
 local module = {}
 
 local function doesIdExsist(id: string)
-	return (Queues[id] ~= nil)
+	assert(Queues[id] ~= nil, `{id} does not exsist`)
+	--return (Queues[id] ~= nil)
 end
 
 function module:Start()
@@ -25,7 +26,11 @@ function module:new(elements): string
 	local newQueue: Framework.tQueue = {
 		id = Framework:GenerateID(),
 		current = 0,
-		line = elements
+		line = elements,
+		
+		metadata = {
+			freezeQueue = false
+		}
 	} 
 	
 	Queues[newQueue.id] = newQueue
@@ -33,18 +38,29 @@ function module:new(elements): string
 	return newQueue.id
 end
 
+function module:setMetadata(id: string, meta: Framework.tQueueMetadata)
+	doesIdExsist(id)
+	Queues[id].metadata = meta
+end
+
 function module:find(id: string)
-	return doesIdExsist(id)
+	return Queues[id] ~= nil
 end
 
 function module:get(id: string): Framework.tQueue
-	if (not doesIdExsist(id)) then return end
+	doesIdExsist(id)
+	
 	return Queues[id]
 end
 
-function module: insert(id: string, elements: any | {any})
-	if (not doesIdExsist(id)) then return end
-	
+function module:getCurrent(id: string): any
+	doesIdExsist(id)
+	return Queues[id].current
+end
+
+function module:insert(id: string, elements: any | {any})
+	doesIdExsist(id)
+
 	if (typeof(elements) == "table")  then
 		
 		for i, v in pairs(elements)  do
@@ -58,14 +74,16 @@ function module: insert(id: string, elements: any | {any})
 end
 
 function module:size(id: string)	
-	if (not doesIdExsist(id)) then return end
+	doesIdExsist(id)
 	return #Queues[id].line
 end
 
 function module:next(id: string, destroyIfLastElement: boolean): any
-	if (not doesIdExsist(id)) then return end
-	
+	doesIdExsist(id)
+
 	local queue: Framework.tQueue = Queues[id]
+	if (queue.metadata.freezeQueue == true) then return end
+	
 	local nextValue = queue.line[1]
 	
 	queue.current = queue.line[1]
@@ -76,9 +94,16 @@ function module:next(id: string, destroyIfLastElement: boolean): any
 	return nextValue
 end
 
-function module:delete(id: string)
-	if (not doesIdExsist(id)) then return end
+function module:clear(id: string)
+	doesIdExsist(id)
 	
+	Queues[id].current = 0
+	Queues[id].line = {}
+end
+
+function module:delete(id: string)
+	doesIdExsist(id)
+
 	Queues[id] = nil
 end
 

@@ -93,7 +93,7 @@ local ClientJoined = Framework:NewSignal(StartUpGroup, Services.Players.PlayerRe
 end))
 
 
-lFramework:Connect("InventoryRemote", function(player, Payload: RemotePayloadTypes.tInventoryRemotePayload | {RemotePayloadTypes.tInventoryRemotePayload})
+Framework:Connect("InventoryRemote", function(player, Payload: RemotePayloadTypes.tInventoryRemotePayload | {RemotePayloadTypes.tInventoryRemotePayload})
 	if not Framework:ValidateTypes(Payload) then return end
 	
 	useModules(Payload)

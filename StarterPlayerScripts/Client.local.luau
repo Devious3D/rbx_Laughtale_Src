@@ -59,43 +59,56 @@ local main = function(Table)
 	Shared.Queue:delete(LoadQueueId)
 	
 	local Animations = ReplicatedStorage.Assets.Animations:GetDescendants()
-	Shared.Animator:SetMode(framework.eAnimatorMode.client)
+	
 	local succ = Shared.Animator:LoadAnimations(nil, "Movement", Animations)
+	
 	Modules.Keybinds:CreateKeybinds()
-		
-	--while (Shared.Queue:find(LoadQueueId)) do
-	--	local item: () -> (boolean) = Shared.Queue:next(LoadQueueId)
-	--	local result = item()
-	--	if result == false then 
-			
-	--		local queueObj: framework.tQueue = Shared.Queue:get(LoadQueueId)
-	--		error(`("Load Failed {queueObj}`)
-	--	end
-		
-	--	task.wait(.1)
-	--end
 	
 
 	do
 		local InputObjects = ReplicatedStorage.FrameworkModules.Inputs.GameplayInputs
 		InputObjects.TestKey.Pressed:Connect(function()
 
-			local newQueueId: framework.tQueue = Shared.Queue:new({1, 2, 3, 4, 5})
-			print(Shared.Queue:get(newQueueId))
+			do
+				--local newQueueId: framework.tQueue = Shared.Queue:new({1, 2, 3, 4, 5})
+				--print(Shared.Queue:get(newQueueId))
 
-			local id: framework.tTimer = Shared.Timer:new(1, framework.eTimerType.tickDown)
-			Shared.Timer:start(id)
+				--local id: framework.tTimer = Shared.Timer:new(1, framework.eTimerType.tickDown)
+				--Shared.Timer:start(id)
 
-			local connectionId		
-			connectionId = Shared.Timer:connect(id, function()
-				--Shared.Timer:disconnect(connectionId, id)		
-				print(Shared.Queue:next(newQueueId))
-				
-				if (Shared.Queue:size(newQueueId) == 0)  then
-					Shared.Queue:insert(newQueueId, {1, 2, 3, 4, 5})
-				end
+				--local connectionId		
+				--connectionId = Shared.Timer:connect(id, function()
+				--	--Shared.Timer:disconnect(connectionId, id)		
+				--	print(Shared.Queue:next(newQueueId))
+
+				--	if (Shared.Queue:size(newQueueId) == 0)  then
+				--		Shared.Queue:insert(newQueueId, {1, 2, 3, 4, 5})
+				--	end
+				--end)
+			end
+			
+			Shared.Animator:AttachToMarker(nil, "Movement", "BackDash", "TestMarker", function()
+				print("Marker1")
+			end)
+
+			Shared.Animator:AttachToMarker(nil, "Movement", "BackDash", "TestMarker", function()
+				print("Marker1")
 			end)
 			
+			
+			local playData: framework.tAnimationPlayData = {
+				fadeInSpeed = .3,
+				weight = 1,
+				speed = 1
+			}
+			Shared.Animator:Queue(nil, "Movement", "BackDash", playData)
+			Shared.Animator:Queue(nil, "Movement", "BackDash", playData)
+			Shared.Animator:Queue(nil, "Movement", "BackDash", playData)
+			Shared.Animator:Queue(nil, "Movement", "BackDash", playData)
+			
+			task.wait(.5)
+			
+			local track = Shared.Animator:Play(nil, "Movement", "FrontDash", playData)
 		end)
 	end
 	

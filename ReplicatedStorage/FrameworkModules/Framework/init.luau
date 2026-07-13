@@ -107,7 +107,7 @@ export type tTimer = {
  
 
 export type tQueueMetadata = {
-	
+	freezeQueue: boolean
 }
 
 export type tQueue = {
@@ -119,13 +119,26 @@ export type tQueue = {
 }
 
 export type tAnimationInfo = {
-	time: number,
-	id: string,	
+	track: AnimationTrack,
+	markerGroupId: string	
 }
 
 export type tAnimatorHandle = {
-	currentTrack: tAnimationInfo,
-	Tracks: {string}
+	currentTracks: {tAnimationInfo},
+	trackQueueId: string,
+	animations: {string}
+}
+
+
+export type tAnimationPlayData = {
+	fadeInSpeed: number,
+	weight: number,
+	speed: number
+}
+
+export type tQueuedAnimation = {
+	track: AnimationTrack,
+	playData: tAnimationPlayData
 }
 
 
@@ -368,6 +381,7 @@ function module:BenchmarkSpeed(func)
 	print(math.abs(Then - Now))	
 end
 
+
 function module:GetModule(ModuleName: string): ModuleScript
 	local Modules = ReplicatedStorage.Modules:GetDescendants()
 	local RequestedModule: ModuleScript
@@ -447,29 +461,28 @@ end
 
 --[[
 	This Creates a new Script Signal
-	<code>Name</code>: is the name of the Connection
 	<code>Group</code>: connection group, if nil, it will be added to the main connection list
-	<code>Thread</code>: the signal to connect to
+	<code>Thread</code>: the signal to connect too
 ]]
 function module:NewSignal(GroupId: string, Thread: RBXScriptConnection): string
-	local id = module:GenerateID()
+	local connectionId = module:GenerateID()
 	
 	
 	if GroupId ~= nil and Connections.Groups[GroupId] ~= nil then
 			
 		local GroupToAddToo = Connections.Groups[GroupId]
-		if GroupToAddToo[id] ~= nil then return nil end
+		if GroupToAddToo[connectionId] ~= nil then return nil end
 
-		GroupToAddToo[id] = Thread
+		GroupToAddToo[connectionId] = Thread
 
-		return GroupToAddToo[id]
+		return connectionId
 	end
 
-	if Connections[id] ~= nil then return nil end
-	Connections[id] = Thread
+	if Connections[connectionId] ~= nil then return nil end
+	Connections[connectionId] = Thread
 	
 	
-	return id
+	return connectionId
 end
 
 
@@ -553,6 +566,17 @@ function module:FindGroup(id: string): boolean
 	if Connections.Groups[id] ~= nil then return true end
 
 	return false
+end
+
+function module:ClearGroup(id: string)
+	assert(Connections.Groups[id] ~= nil, `{id} does not exsist`)
+	
+	--print(id)
+	--print(Connections.Groups)
+	
+	for i, v in pairs(Connections.Groups[id]) do
+		module:DestroyConnection(v)
+	end
 end
 
 function module:DestroyGroup(id: string)

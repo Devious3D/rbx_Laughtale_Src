@@ -131,6 +131,4 @@ function module:Raycast(Ignore, Origin, Direction, RayOrRayCast)
 end
 
 
-
-
 return Utility

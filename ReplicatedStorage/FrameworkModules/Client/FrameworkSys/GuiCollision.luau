@@ -56,7 +56,7 @@ function module:DistanceCollision(params: Framework.tGuiCollisionParams): Framew
 		end
 		
 	elseif (params.collisionType.Exclude ~= nil)  then
-		
+		print("Implement Exclude")
 	end
 		
 	if (#result.Hit == 1) then result.Hit = result.Hit[1] end

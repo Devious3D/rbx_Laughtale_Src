@@ -86,17 +86,17 @@ return {
 	--CrewData = {},
 
 	KeybindData = {
-		Run = Enum.KeyCode.W.Name,
-		Attack = Enum.UserInputType.MouseButton1.Name,
-		Inventory = Enum.KeyCode.Backquote.Name,
-		Block = Enum.KeyCode.F.Name,
-		Equip = Enum.KeyCode.E.Name,
-		Emotes = Enum.KeyCode.K.Name,
-		Menu = Enum.KeyCode.M.Name,
-		Crouch = Enum.KeyCode.C.Name,
-		HighJump = Enum.KeyCode.T.Name,
-		Dash = Enum.KeyCode.Q.Name,
-		TestKey = Enum.KeyCode.L.Name
+		Run = {Enum.KeyCode.W.Name},
+		Attack = {Enum.KeyCode.MouseLeftButton.Name},
+		Inventory = {Enum.KeyCode.Backquote.Name},
+		Block = {Enum.KeyCode.F.Name},
+		Equip = {Enum.KeyCode.E.Name},
+		Emotes = {Enum.KeyCode.K.Name},
+		Menu = {Enum.KeyCode.M.Name},
+		Crouch = {Enum.KeyCode.C.Name},
+		HighJump = {Enum.KeyCode.T.Name},
+		Dash = {Enum.KeyCode.Q.Name},
+		TestKey = {Enum.KeyCode.L.Name}
 	},
 
 	--Ships = {},

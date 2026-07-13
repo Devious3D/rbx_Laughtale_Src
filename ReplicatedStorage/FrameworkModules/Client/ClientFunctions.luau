@@ -1,3 +1,5 @@
+--!strict
+
 local repStore = game:GetService("ReplicatedStorage")
 local Framework = require("../Framework")
 
@@ -10,11 +12,12 @@ module.PlayerData = {}
 
 
 function module:Start()
-	--warn(script.Name)
+	warn(script.Name)
 end
 
-function module:SecondaryStart()
-
+--Core Load Process
+function module:SecondaryStart(): boolean
+	
 end
 
 

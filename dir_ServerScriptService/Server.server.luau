@@ -47,14 +47,15 @@ Framework:CreateRemoteChannel("Combat", 3)
 Framework:CreateRemoteChannel("Data", 3)
 Framework:CreateRemote("InventoryRemote")
 
-Framework:NewConnectionGroup("Main")
-Framework:NewConnectionGroup("StartUp")
+local MainGroup = Framework:NewConnectionGroup()
+local StartUpGroup = Framework:NewConnectionGroup()
 
 
-Framework:NewSignal("Server_PlayerJoined", "StartUp", Services.Players.PlayerAdded:Connect(function(player: Player)
+local ServerStart = Framework:NewSignal(StartUpGroup, Services.Players.PlayerAdded:Connect(function(player: Player)
 	
 	warn(`Player {player.Name}`)
-	
+
+
 	--Data Loading and Handling
 	local Data: DataTemplateTypes.tDataTemplate = DataModule:PlayerAdded(player)
 	
@@ -84,7 +85,7 @@ Framework:NewSignal("Server_PlayerJoined", "StartUp", Services.Players.PlayerAdd
 	Framework:FireRemoteChannel("StartUpConnections", player, Data)
 end))
 
-Framework:NewSignal("Client_PlayerJoined", "StartUp", Services.Players.PlayerRemoving:Connect(function(player)
+local ClientJoined = Framework:NewSignal(StartUpGroup, Services.Players.PlayerRemoving:Connect(function(player)
 	
 	local PlayerInv = Modules.InventoryServer:GetPlayerInventory(player)
 	DataModule:Set(player, "Inventory", PlayerInv)
@@ -92,7 +93,7 @@ Framework:NewSignal("Client_PlayerJoined", "StartUp", Services.Players.PlayerRem
 end))
 
 
-Framework:Connect("InventoryRemote", function(player, Payload: RemotePayloadTypes.tInventoryRemotePayload | {RemotePayloadTypes.tInventoryRemotePayload})
+lFramework:Connect("InventoryRemote", function(player, Payload: RemotePayloadTypes.tInventoryRemotePayload | {RemotePayloadTypes.tInventoryRemotePayload})
 	if not Framework:ValidateTypes(Payload) then return end
 	
 	useModules(Payload)

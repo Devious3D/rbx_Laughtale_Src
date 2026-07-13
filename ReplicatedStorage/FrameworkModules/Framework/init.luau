@@ -1,8 +1,3 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
---// Services
-local Services = require("../FrameworkModules/Shared/Services")
-
 export type FrameworkIncludeHandle = {
 	Services: {string} | {ModuleScript},
 	Modules: {string} | {ModuleScript},
@@ -72,6 +67,7 @@ export type CallStruct_MFP = {
 }
 
 
+--Gui Collision
 export type tGuiCollisionType = {
 	Include: boolean,
 	Exclude: boolean
@@ -90,9 +86,55 @@ export type tGuiCollisionResult = {
 	Position: Vector2
 }
 
---export type RemoteOwnerInformation
+--Timer
+
+export type tTimerMetadata = {
+	paused: boolean,
+	stopOnTick: boolean,
+	Listeners: {() -> ()}
+}
+
+export type tTimer = {
+	id: string,
+	currentTime: number,
+	defaultTime: number,
+	targetTime: number,
+	noramlized: number,
+	type: number,
+	
+	metadata: tTimerMetadata
+}
+ 
+
+export type tQueueMetadata = {
+	
+}
+
+export type tQueue = {
+	id: string,
+	current: any,
+	line:{any},
+	
+	metadata: tQueueMetadata 
+}
+
+export type tAnimationInfo = {
+	time: number,
+	id: string,	
+}
+
+export type tAnimatorHandle = {
+	currentTrack: tAnimationInfo,
+	Tracks: {string}
+}
+
+
 
 --// Local Variables
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Services = require("../FrameworkModules/Shared/Services")
+
 
 local Client = Services.RunService:IsClient()
 local Server = Services.RunService:IsServer()
@@ -100,6 +142,7 @@ local IsStudio = Services.RunService:IsStudio()
 
 local ServerStarted = script:GetAttribute("ServerStarted")
 local ClientStarted = script:GetAttribute("ClientStarted")
+
 
 
 --// TweenInfo or Tables
@@ -117,7 +160,6 @@ local ActiveRemotes: {RemoteEvent} = {
 	Channels = {}
 }
 local RemoteSignals: {RemoteEvent} = {
-	["TestSignal"] = "TestSignal"
 }
 local Connections: {RBXScriptConnection?} = {
 	Groups = {}
@@ -138,6 +180,20 @@ module.ClientDebugMode = false
 module.ServerDebugMode = false 
 module.BlockConsolePrints = false
 
+module.eTimerType = {
+	tickUp = 1,
+	tickDown = 2
+}
+
+module.eAnimatorMode = {
+	client = 1,
+	server = 2
+}
+
+module.ePrintLevel = {
+	Warn = 1,
+	Error = 2,
+}
 
 function module.new()
 	Modules = {
@@ -203,9 +259,9 @@ function module:Start(Callback)
 		script:SetAttribute("ServerStarted", true)
 		if Callback then task.defer(function() Callback() end) end
 
-		module:NewConnectionGroup("ServerTickFunctions")
+		local ServerTickFunctionId = module:NewConnectionGroup("ServerTickFunctions")
 
-		module:NewSignal(`{script.Name}ServerHeartbeat`, "ServerTickFunctions",  Services.RunService.Heartbeat:Connect(function(delta)
+		module:NewSignal(ServerTickFunctionId,  Services.RunService.Heartbeat:Connect(function(delta)
 
 			for i, v in pairs(Modules.Server) do
 				if v.Tick == nil then continue end
@@ -219,7 +275,7 @@ function module:Start(Callback)
 			 			
 		end))
 		
-		module:NewSignal(`{script.Name}ServerPreSimulation`, "ServerTickFunctions", Services.RunService.PreSimulation:Connect(function(deltaSim)
+		module:NewSignal(ServerTickFunctionId, Services.RunService.PreSimulation:Connect(function(deltaSim)
 			
 			for i, v in pairs(Modules.Server) do
 				if v.PreTick == nil then continue end
@@ -250,7 +306,7 @@ function module:Start(Callback)
 		
 		if Callback then task.defer(function() Callback() end) end
 		
-		module:NewConnection(`{script.Name}ClientHeartbeat`, Services.RunService.Heartbeat:Connect(function(delta)	
+		module:NewSignal(nil, Services.RunService.Heartbeat:Connect(function(delta)	
 			--if Modules.Client.ClientFunctions.DataLoaded == nil then return end
 			--if Modules.Client.ClientFunctions.DataLoaded == false then return end
 
@@ -268,21 +324,48 @@ function module:Start(Callback)
 
 			--print(`Client: {gcinfo()}`)
 		end))
-
-		module:NewConnection(`{script.Name}ClientRenderStepped`, Services.RunService.PreRender:Connect(function(delta)
+		
+		module:NewSignal(nil, Services.RunService.PreRender:Connect(function(delta)
 			--if Modules.Client.ClientFunctions.DataLoaded == nil then return end
 			--if Modules.Client.ClientFunctions.DataLoaded == false then return end
-			
+
 			for i, v in pairs(Modules.Client) do
 				if v.RenderTick == nil then continue end
 				task.spawn(function() v.RenderTick(delta) end)
 			end
 		end))
-		
-		--print(Modules)
 
 	end
 
+end
+
+
+local aplhabet = require(script.Alphabet)
+function module:GenerateID(): string
+		
+	const length = 10
+	local id = ""
+	
+	for i=0, length  do 
+		local letterOrNum = math.random(0, 1)
+		
+		if (letterOrNum == 0) then id = `{id}{aplhabet[math.random(1, #aplhabet)]}` end
+		if (letterOrNum == 1) then id = `{id}{tostring(math.random(0, 9))}` end
+	end
+	
+	return id
+end
+
+function module:BenchmarkSpeed(func)
+	
+	const Then = os.clock()
+	
+	func()
+	
+	const Now = os.clock()
+	
+	--not accurate
+	print(math.abs(Then - Now))	
 end
 
 function module:GetModule(ModuleName: string): ModuleScript
@@ -368,43 +451,35 @@ end
 	<code>Group</code>: connection group, if nil, it will be added to the main connection list
 	<code>Thread</code>: the signal to connect to
 ]]
-function module:NewSignal(Name: string, Group: string, Thread: RBXScriptConnection): RBXScriptConnection
-	if Group ~= nil and Connections.Groups[Group] ~= nil then
+function module:NewSignal(GroupId: string, Thread: RBXScriptConnection): string
+	local id = module:GenerateID()
+	
+	
+	if GroupId ~= nil and Connections.Groups[GroupId] ~= nil then
 			
-		local GroupToAddToo = Connections.Groups[Group]
-		if GroupToAddToo[Name] ~= nil then return nil end
+		local GroupToAddToo = Connections.Groups[GroupId]
+		if GroupToAddToo[id] ~= nil then return nil end
 
-		GroupToAddToo[Name] = Thread
+		GroupToAddToo[id] = Thread
 
-		return GroupToAddToo[Name]
+		return GroupToAddToo[id]
 	end
 
-	if Connections[Name] ~= nil then return nil end
-	Connections[Name] = Thread
+	if Connections[id] ~= nil then return nil end
+	Connections[id] = Thread
 	
 	
-	return Connections[Name]
+	return id
 end
 
 
-
-
---Not Supported
-function module:NewConnection(Name: string, Thread: RBXScriptConnection): nil
-
-	if Connections[Name] ~= nil then return end
-	Connections[Name] = Thread
-	--print(`{Name}, Group: {Group}`)
-end
-
-
-function module:GetGroupFromConnection(Name: string): string
+function module:GetGroupFromConnection(id: string): string
 
 	local ConnectionGroup: RBXScriptConnection? = nil
 
 	for i, v in pairs(Connections.Groups) do
 		for SigName, Connection in pairs(v) do
-			if SigName ~= Name then continue end
+			if SigName ~= id then continue end
 
 			ConnectionGroup = i
 
@@ -415,26 +490,26 @@ function module:GetGroupFromConnection(Name: string): string
 	return ConnectionGroup
 end
 
-function module:DestroyConnection(Name): boolean
+function module:DestroyConnection(id): boolean
 
-	if typeof(Name) == "string" then
-		if Connections[Name] == nil then 
+	if typeof(id) == "string" then
+		if Connections[id] == nil then 
 
-			local ConnectionGroup =  module:GetGroupFromConnection(Name)
+			local ConnectionGroup =  module:GetGroupFromConnection(id)
 			if ConnectionGroup == nil then return end 
 
-			Connections.Groups[ConnectionGroup][Name]:Disconnect()
-			Connections.Groups[ConnectionGroup][Name] = nil
+			Connections.Groups[ConnectionGroup][id]:Disconnect()
+			Connections.Groups[ConnectionGroup][id] = nil
 			
 			return 
 		end	
 
-		Connections[Name]:Disconnect()
-		Connections[Name] = nil
+		Connections[id]:Disconnect()
+		Connections[id] = nil
 		
-	elseif typeof(Name) == "table" then
+	elseif typeof(id) == "table" then
 
-		for i, v in pairs(Name) do
+		for i, v in pairs(id) do
 			if Connections[v] == nil then
 
 				local Group =  module:GetGroupFromConnection(i)
@@ -454,34 +529,36 @@ function module:DestroyConnection(Name): boolean
 
 end
 
-function module:FindConnection(Name) 
-	local IsInGroup = module:GetGroupFromConnection(Name)
+function module:FindConnection(id) 
+	local IsInGroup = module:GetGroupFromConnection(id)
 	if IsInGroup ~= nil then return true end
 
-	if Connections[Name] ~= nil then return true end
+	if Connections[id] ~= nil then return true end
 
 	return false
 end
 
-function module:NewConnectionGroup(Name: string): string
-	if Connections.Groups[Name] ~= nil then return end
-	Connections.Groups[Name] = {}
+function module:NewConnectionGroup(): string
+	local newGroupId = module:GenerateID()
+	
+	if Connections.Groups[newGroupId] ~= nil then return end
+	Connections.Groups[newGroupId] = {}
 	
 	--print(Connections.Groups)
-	return Name
+	return newGroupId
 end
 
-function module:FindGroup(Name: string): boolean
-	if Connections.Groups[Name] == nil then return false end
-	if Connections.Groups[Name] ~= nil then return true end
+function module:FindGroup(id: string): boolean
+	if Connections.Groups[id] == nil then return false end
+	if Connections.Groups[id] ~= nil then return true end
 
 	return false
 end
 
-function module:DestroyGroup(Name: string)
-	if Connections.Groups[Name] == nil then return end
-	module:DestroyConnection(Connections.Groups[Name])
-	Connections.Groups[Name] = nil
+function module:DestroyGroup(id: string)
+	if Connections.Groups[id] == nil then return end
+	module:DestroyConnection(Connections.Groups[id])
+	Connections.Groups[id] = nil
 	--print(Connections.Groups)
 end
 
@@ -491,20 +568,20 @@ function module:DestroyAllGroups()
 	end
 end
 
-function module:BindRender(Name, Priority, Action, Thread )
-	if not Client or Connections[Name] or type(Name) ~= "string" or type(Priority) ~= "number" then
+--function module:BindRender(Name, Priority, Action, Thread )
+--	if not Client or Connections[Name] or type(Name) ~= "string" or type(Priority) ~= "number" then
 				
-		error("Check Here")
-		return 
-	end
+--		error("Check Here")
+--		return 
+--	end
 	
-	if Action == "Make" then		
-		Connections[Name] = Services.RunService:BindToRenderStep(Name, Priority, Thread)				
-	elseif Action == "Destroy" then		
-		Services.RunService:UnbindFromRenderStep(Name)
-	end
+--	if Action == "Make" then		
+--		Connections[Name] = Services.RunService:BindToRenderStep(Name, Priority, Thread)				
+--	elseif Action == "Destroy" then		
+--		Services.RunService:UnbindFromRenderStep(Name)
+--	end
 	
-end
+--end
 
 
 
@@ -825,6 +902,13 @@ end
 ------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------
 
+function module:adp_CreateTimer(): tTimer
+	
+end
+
+------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+
 
 function module:ValidateTypes(Data: {any}): boolean
 	if (type(Data) ~= "table") then 
@@ -890,17 +974,17 @@ end
 --end
 --------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------
-function module:Print(Message: string, Level:string)
+function module:Print(Message: string, Level:number)
 	if module.BlockConsolePrints then return end
 	--if (IsStudio) then return end
 
 	local printlevels = {
 
-		Warn = function()
+		[module.ePrintLevel.Warn] = function()
 			warn(Message)
 		end,
 
-		Error = function()
+		[module.ePrintLevel.Error] = function()
 			error(Message)
 		end
 	}

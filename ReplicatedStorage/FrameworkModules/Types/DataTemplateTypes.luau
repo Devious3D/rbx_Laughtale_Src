@@ -122,17 +122,17 @@ export type tInventory = {
 }
 
 export type tKeybinds = {
-	Run: string,
-	Attack: string,
-	Inventory: string,
-	Block: string,
-	Equip: string,
-	Emotes: string,
-	Menu: string,
-	Crouch: string,
-	HighJump: string,
-	Dash: string,
-	TestKey: string
+	Run: {string},
+	Attack: {string},
+	Inventory: {string},
+	Block: {string},
+	Equip: {string},
+	Emotes: {string},
+	Menu: {string},
+	Crouch: {string},
+	HighJump: {string},
+	Dash: {string},
+	TestKey: {string}
 }
 
 -------------------------------------------------

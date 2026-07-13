@@ -503,6 +503,14 @@ function module:Start()
 	_connectServerEvents()
 	-- Defer initial refresh so PlayerData is populated and remotes exist
 	task.defer(_refreshCombatInfo)
+	
+	ReplicatedStorage.FrameworkModules.Inputs.GameplayInputs.Attack.Pressed:Connect(function()
+		
+	end)
+	
+	coroutine.wrap(function()
+		module:Init(Modules.ClientFunctions.Character)
+	end)()
 end
 
 ---------------------------------------------------------------------------

@@ -34,4 +34,16 @@ function UIMethods:LocationUI(plr: Player, LocationName, LocationDescription)
 	
 end
 
+function UIMethods:LocationUI2(plr: Player, LocationName, LocationDescription)
+	local playerGui = plr:WaitForChild("PlayerGui")
+	local locationUI = playerGui:WaitForChild("RegionLocationGUI")
+	local PlaceName = locationUI:WaitForChild("LocationName")
+	local PlaceDescription = locationUI:WaitForChild("LocationDescription")
+	PlaceName.Text = LocationName
+	PlaceName.TextTransparency = 1
+	PlaceDescription.Text = LocationDescription
+	PlaceDescription.TextTransparency = 1
+	locationUI.Enabled = true
+end
+
 return UIMethods

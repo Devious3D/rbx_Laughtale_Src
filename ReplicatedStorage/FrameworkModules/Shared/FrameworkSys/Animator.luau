@@ -50,10 +50,9 @@ end
 
 function module:LoadAnimations(player: string, Category: string, animationObjects: {Animation}): boolean
 	
+	print("Something")
 	
-	if (Framework:IsClient()) then
-		
-		local 
+	if (Framework:IsClient()) then 
 		
 		tracks.Tracks[Category] = {}
 

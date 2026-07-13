@@ -1,3 +1,0 @@
-local HairHandler = {}
-
-return HairHandler

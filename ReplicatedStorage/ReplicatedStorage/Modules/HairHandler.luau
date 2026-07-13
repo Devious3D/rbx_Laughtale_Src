@@ -1,0 +1,3 @@
+local HairHandler = {}
+
+return HairHandler
